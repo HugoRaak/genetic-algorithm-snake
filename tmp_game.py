@@ -7,8 +7,9 @@ WINDOW_SIZE = GRID_SIZE * CELL_SIZE
 
 
 class Game:
-    def __init__(self, root):
+    def __init__(self, root, display=False):
         self.root = root
+        self.display = display
         self.root.title("Snake Game")
         screen_width = root.winfo_screenwidth()
         screen_height = root.winfo_screenheight()
@@ -28,6 +29,9 @@ class Game:
 
         # Position initiale du serpent
         self.snake = [(5, 5), (4, 5), (3, 5)]
+        self.grid[5][5] = 1
+        self.grid[5][4] = 1
+        self.grid[5][3] = 1
         self.direction = 'Right'
 
         # Ajout de la première pomme
@@ -84,8 +88,11 @@ class Game:
                 self.grid[tail[1]][tail[0]] = 0
 
             self.grid[new_head[1]][new_head[0]] = 1
-            self.draw()
-            self.root.after(200, self.update)
+            if self.display:
+                self.draw()
+                self.root.after(200, self.update)
+            else:
+                self.update()
         else:
             self.gameover()
 
@@ -100,7 +107,7 @@ class Game:
                                              (i + 1) * CELL_SIZE, (j + 1) * CELL_SIZE,
                                              outline="", fill="#aad751" if (i + j) % 2 == 0 else "#9ac745")
                 # Dessiner le serpent
-                if (i, j) in self.snake:
+                if self.grid[j][i] == 1:
                     self.canvas.create_rectangle(i * CELL_SIZE, j * CELL_SIZE,
                                                  (i + 1) * CELL_SIZE, (j + 1) * CELL_SIZE,
                                                  fill="#4674e9")
