@@ -2,6 +2,17 @@ import numpy as np
 from tensorflow.keras import backend as K
 
 
+def avg_steps_between_eating(steps_between_eating):
+    return round(np.mean(np.array(steps_between_eating)), 2) if len(steps_between_eating) > 0 else 0
+
+
+def fitness_func(best_score, nb_deaths, steps_between_eating, penalties):
+    return round(((best_score * 500)
+            - (nb_deaths * 15)
+            - (avg_steps_between_eating(steps_between_eating) * 10)
+            - (penalties * 100)), 2)
+
+
 class Individual:
     def __init__(self, game, model, input_size, generation_id, individual_id):
         self.game = game
@@ -9,10 +20,6 @@ class Individual:
         self.state_size = input_size
         self.generation_id = generation_id
         self.individual_id = individual_id
-        self.best_score = 0
-        self.nb_deaths = 0
-        self.steps_between_eating = []
-        self.penalties = 0
 
     # Get current state of the game in form of an input for the neural network
     def get_state(self):
@@ -43,6 +50,11 @@ class Individual:
         steps = 0
         prev_score = 0
         steps_to_get_food = 0
+        nb_deaths = 0
+        best_score = 0
+        steps_between_eating = []
+        penalties = 0
+        scores = []
         K.clear_session()
         self.game.reset()
         while steps < steps_per_game:
@@ -54,41 +66,35 @@ class Individual:
 
             if prev_score != score:
                 prev_score = score
-                self.steps_between_eating.append(1 if steps_to_get_food == 0 else steps_to_get_food)
+                steps_between_eating.append(1 if steps_to_get_food == 0 else steps_to_get_food)
                 steps_to_get_food = 0
             elif is_dead:
-                self.nb_deaths += 1
+                nb_deaths += 1
                 need_reset = True
             elif steps_to_get_food >= max_steps_to_get_food:
-                self.penalties += 1
+                penalties += 1
                 need_reset = True
             else:
                 steps_to_get_food += 1
 
             if need_reset:
-                if score > self.best_score:
-                    self.best_score = score
+                scores.append(score)
+                if score > best_score:
+                    best_score = score
                 prev_score = 0
                 steps_to_get_food = 0
                 self.game.reset()
             steps += 1
 
-        return self.fitness_func()
+        fitness = fitness_func(best_score, nb_deaths, steps_between_eating, penalties)
+        self.print_evaluation(fitness, best_score, nb_deaths, steps_between_eating, penalties)
+        return fitness, round(np.mean(np.array(scores)), 2), nb_deaths, best_score
 
-    def avg_steps_between_eating(self):
-        return round(np.mean(np.array(self.steps_between_eating)), 2) if len(self.steps_between_eating) > 0 else 0
-
-    def fitness_func(self):
-        return round(((self.best_score * 500)
-                - (self.nb_deaths * 15)
-                - (self.avg_steps_between_eating() * 10)
-                - (self.penalties * 100)), 2)
-
-    def print_evaluation(self, fitness):
+    def print_evaluation(self, fitness, best_score, nb_deaths, steps_between_eating, penalties):
         print("Generation: ", self.generation_id,
               " Individual: ", self.individual_id,
-              " Evaluation: ", fitness)
-        print("Detailed evaluation: Best score: ", self.best_score,
-              " Nb deaths: ", self.nb_deaths,
-              " Avg steps between eating: ", self.avg_steps_between_eating(),
-              " Penalties: ", self.penalties)
+              " Fitness: ", fitness)
+        print("Detailed evaluation: Best score: ", best_score,
+              " Nb deaths: ", nb_deaths,
+              " Avg steps between eating: ", avg_steps_between_eating(steps_between_eating),
+              " Penalties: ", penalties)
