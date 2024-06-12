@@ -2,11 +2,21 @@ import numpy as np
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Input
 
+
+def weights_size(layers):
+    s = 0
+    for i in range(len(layers)-1):
+        s += layers[i] * layers[i+1]
+    return s
+
+
 class Model:
+    # input layer 4 directions of dangers * 4 directions of movement * 4 directions of food
+    # output layer 4 directions of movement
     def __init__(self, layers=[12, 120, 120, 120, 4], weights=None):
         self.layers = layers
         self.weights = weights
-        self.nb_weights = self.weights_size(layers)
+        self.nb_weights = weights_size(layers)
         self.state_size = layers[0]
 
     def build_model(self, weights):
@@ -29,9 +39,3 @@ class Model:
             added_weights += self.layers[i-1]*self.layers[i]
             model.layers[-1].set_weights((weight, np.zeros(self.layers[i])))
         return model
-
-    def weights_size(self, layers):
-        s = 0
-        for i in range(len(layers)-1):
-            s += layers[i] * layers[i+1]
-        return s

@@ -14,6 +14,7 @@ class Individual:
         self.steps_between_eating = []
         self.penalties = 0
 
+    # Get current state of the game in form of an input for the neural network
     def get_state(self):
         head_x, head_y = self.game.snake[0]
         apple_x, apple_y = self.game.apple
@@ -75,7 +76,7 @@ class Individual:
         return self.fitness_func()
 
     def avg_steps_between_eating(self):
-        return np.mean(np.array(self.steps_between_eating)) if len(self.steps_between_eating) > 0 else 0
+        return round(np.mean(np.array(self.steps_between_eating)), 2) if len(self.steps_between_eating) > 0 else 0
 
     def fitness_func(self):
         return round(((self.best_score * 500)
