@@ -102,16 +102,16 @@ class Game:
                                                  i * CELL_SIZE, j * CELL_SIZE,
                                                  fill="#4674e9")
                     if (i, j) == self.snake[0]:  # Tête du serpent
-                        if self.direction == 'Up':
+                        if self.direction == self.up:
                             self.draw_eye((i - 1), (j - 1), "top-left")
                             self.draw_eye((i - 1), (j - 1), "top-right")
-                        elif self.direction == 'Down':
+                        elif self.direction == self.down:
                             self.draw_eye((i - 1), (j - 1), "bottom-left")
                             self.draw_eye((i - 1), (j - 1), "bottom-right")
-                        elif self.direction == 'Left':
+                        elif self.direction == self.left:
                             self.draw_eye((i - 1), (j - 1), "top-left")
                             self.draw_eye((i - 1), (j - 1), "bottom-left")
-                        elif self.direction == 'Right':
+                        elif self.direction == self.right:
                             self.draw_eye((i - 1), (j - 1), "top-right")
                             self.draw_eye((i - 1), (j - 1), "bottom-right")
 
