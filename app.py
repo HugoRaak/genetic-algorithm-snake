@@ -2,11 +2,13 @@ import numpy as np
 from model import Model
 from game import Game
 from individual import Individual
+from ag import *
 
 
 INDIVIDUAL_PER_POPULATION = 5
-NB_GENERATIONS = 1
+NB_GENERATIONS = 2
 NB_SELECTED_INDIVIDUALS = 2
+NB_MUTATIONS = 1
 
 
 def run_population(population_weights, model_builder, simulation, generation_id):
@@ -25,16 +27,6 @@ def run_population(population_weights, model_builder, simulation, generation_id)
     return np.array(fitness_arr)
 
 
-def select_individuals(pop_weights, pop_fitness):
-    tmp_fitness = np.array(pop_fitness, copy=True)
-    selected = np.empty((NB_SELECTED_INDIVIDUALS, pop_weights.shape[1]))
-    for selected_num in range(NB_SELECTED_INDIVIDUALS):
-        max_fitness_idx = np.argmax(tmp_fitness)
-        selected[selected_num, :] = pop_weights[max_fitness_idx, :]
-        tmp_fitness[max_fitness_idx] = -np.inf
-    return selected
-
-
 if __name__ == "__main__":
     game = Game()
     model = Model()
@@ -43,5 +35,15 @@ if __name__ == "__main__":
 
     for generation in range(NB_GENERATIONS):
         population_fitness = run_population(current_population_weights, model, game, generation)
-        selected_individuals = select_individuals(current_population_weights, population_fitness)
-        # update population weights
+        selected_individuals = select_individuals(
+            pop_weights=current_population_weights,
+            pop_fitness=population_fitness,
+            nb_selected=NB_SELECTED_INDIVIDUALS
+        )
+        children_from_crossover = crossover(
+            parents=selected_individuals,
+            children_size=(INDIVIDUAL_PER_POPULATION - NB_SELECTED_INDIVIDUALS, model.nb_weights)
+        )
+        children_from_mutation = mutation(children_from_crossover, NB_MUTATIONS)
+        current_population_weights[0:NB_SELECTED_INDIVIDUALS, :] = selected_individuals
+        current_population_weights[NB_SELECTED_INDIVIDUALS:, :] = children_from_mutation
