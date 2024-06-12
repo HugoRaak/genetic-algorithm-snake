@@ -1,5 +1,6 @@
 import os
 import time
+import tkinter as tk
 import numpy as np
 from model import Model
 from game import Game
@@ -34,7 +35,7 @@ def run_population(population_weights, model_builder, training_game, generation_
             generation_id=generation_id,
             individual_id=i
         )
-        fitness, avg_score, deaths, best_score = individual.play_game()
+        fitness, avg_score, deaths, best_score = individual.play_training_game()
         fitness_arr.append(fitness)
         avg_score_arr.append(avg_score)
         deaths_arr.append(deaths)
@@ -125,6 +126,13 @@ if __name__ == "__main__":
 
     else:
         weights = get_best_individual_weights()
-        model = Model(weights=weights)
-        # game = Game()
-        # game.play_game(model)
+        model = Model()
+        root = tk.Tk()
+        player = Individual(
+            game=Game(root),
+            model=model.build_model(weights),
+            input_size=model.state_size,
+            generation_id=0, individual_id=0
+        )
+        root.after(100, player.play_game)
+        root.mainloop()

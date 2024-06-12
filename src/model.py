@@ -13,9 +13,8 @@ def weights_size(layers):
 class Model:
     # input layer 4 directions of dangers * 4 directions of movement * 4 directions of food
     # output layer 4 directions of movement
-    def __init__(self, layers=[12, 120, 120, 120, 4], weights=None):
+    def __init__(self, layers=[12, 120, 120, 120, 4]):
         self.layers = layers
-        self.weights = weights
         self.nb_weights = weights_size(layers)
         self.state_size = layers[0]
 
@@ -32,10 +31,7 @@ class Model:
             if i == nb_layers-1:
                 activation = 'softmax'
             model.add(Dense(units=self.layers[i], activation=activation))
-            if self.weights is not None:
-                weight = self.weights[added_weights:added_weights+self.layers[i-1]*self.layers[i]].reshape(self.layers[i-1], self.layers[i])
-            else:
-                weight = weights[added_weights:added_weights+self.layers[i-1]*self.layers[i]].reshape(self.layers[i-1], self.layers[i])
+            weight = weights[added_weights:added_weights+self.layers[i-1]*self.layers[i]].reshape(self.layers[i-1], self.layers[i])
             added_weights += self.layers[i-1]*self.layers[i]
             model.layers[-1].set_weights((weight, np.zeros(self.layers[i])))
         return model

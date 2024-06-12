@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 from tensorflow.keras import backend as K
 
@@ -46,7 +48,7 @@ class Individual:
                 state[i] = 0
         return np.asarray(state).reshape(1, self.state_size)
 
-    def play_game(self, steps_per_game=500, max_steps_to_get_food=50):
+    def play_training_game(self, steps_per_game=500, max_steps_to_get_food=50):
         steps = 0
         prev_score = 0
         steps_to_get_food = 0
@@ -89,6 +91,24 @@ class Individual:
         fitness = fitness_func(best_score, nb_deaths, steps_between_eating, penalties)
         self.print_evaluation(fitness, best_score, nb_deaths, steps_between_eating, penalties)
         return fitness, round(np.mean(np.array(scores)), 2), nb_deaths, best_score
+
+    def play_game(self):
+        self.game.reset()
+        self.game.draw()
+        K.clear_session()
+        self.game.root.after(200, self.step)
+
+    def step(self):
+        if not self.game.running:
+            return
+        state = self.get_state()
+        prediction = self.model.predict(state, verbose=0)
+        direction = np.argmax(prediction[0])
+        is_dead = self.game.do_move(direction)
+        if is_dead:
+            self.game.reset()
+            self.game.draw()
+        self.game.root.after(200, self.step)
 
     def print_evaluation(self, fitness, best_score, nb_deaths, steps_between_eating, penalties):
         print("Generation: ", self.generation_id,
