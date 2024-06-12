@@ -10,7 +10,9 @@ INDIVIDUAL_PER_POPULATION = 5
 NB_GENERATIONS = 2
 NB_SELECTED_INDIVIDUALS = 3
 NB_MUTATIONS = 1
-SAVE_INTERVAL = 5
+SAVE_WEIGHTS_INTERVAL = 5
+CURRENT_GENERATION = 0
+RESTORE_WEIGHTS_FROM_TXT = False
 PATH_WEIGHTS = "weights/"
 PATH_STATS = "stats/"
 
@@ -33,7 +35,6 @@ def run_population(population_weights, model_builder, simulation, generation_id)
         avg_score_arr.append(avg_score)
         deaths_arr.append(deaths)
         best_score_arr.append(best_score)
-        individual.print_evaluation(fitness)
     return (np.array(fitness_arr), np.array(avg_score_arr),
             round(np.mean(np.array(deaths_arr)), 2), np.array(best_score_arr))
 
@@ -42,7 +43,12 @@ if __name__ == "__main__":
     game = Game()
     model = Model()
     population_size = (INDIVIDUAL_PER_POPULATION, model.nb_weights)
-    current_population_weights = np.random.choice(np.arange(-1, 1, step=0.01), size=population_size, replace=True)
+
+    if RESTORE_WEIGHTS_FROM_TXT:
+        path = PATH_WEIGHTS + "/generation_" + str(CURRENT_GENERATION) + ".txt"
+        current_population_weights = np.loadtxt(path)
+    else:
+        current_population_weights = np.random.choice(np.arange(-1, 1, step=0.01), size=population_size, replace=True)
 
     for generation in range(NB_GENERATIONS):
         # run population
@@ -80,4 +86,8 @@ if __name__ == "__main__":
         f.close()
 
         # save weights
-        # if generation % SAVE_INTERVAL == 0 or generation == NB_GENERATIONS - 1:
+        if generation % SAVE_WEIGHTS_INTERVAL == 0 or generation == NB_GENERATIONS - 1:
+            if not os.path.exists(PATH_WEIGHTS):
+                os.makedirs(PATH_WEIGHTS)
+            path = PATH_WEIGHTS + "/generation_" + str(generation) + ".txt"
+            np.savetxt(path, current_population_weights)
