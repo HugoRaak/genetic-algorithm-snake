@@ -1,5 +1,3 @@
-import math
-
 import numpy as np
 import time
 from model import Model
@@ -7,25 +5,35 @@ from game import Game
 from individual import Individual
 
 
-if __name__ == "__main__":
-    individual_per_population = 10
-    nb_generations = 1
-    model = Model()
-    population_size = (individual_per_population, model.nb_weights)
-    current_population_weights = np.random.choice(np.arange(-1, 1, step=0.01), size=population_size, replace=True)
-    game = Game()
+INDIVIDUAL_PER_POPULATION = 5
+NB_GENERATIONS = 1
 
-    for generation in range(nb_generations):
-        for i in range(individual_per_population):
-            start_time = time.time()
-            individual = Individual(
-                game=game,
-                model=model.build_model(current_population_weights[i]),
-                input_size=model.layers[0],
-                generation_id=generation,
-                individual_id=i
-            )
-            individual.play_game()
-            individual.print_evaluation()
-            print("Temps d'entraînement: ", round(time.time() - start_time, 2), "s")
+
+def run_population(population_weights, model_builder, simulation, generation_id):
+    fitness_arr = []
+    for i in range(INDIVIDUAL_PER_POPULATION):
+        start_time = time.time()
+        individual = Individual(
+            game=simulation,
+            model=model_builder.build_model(population_weights[i]),
+            input_size=model_builder.layers[0],
+            generation_id=generation_id,
+            individual_id=i
+        )
+        fitness = individual.play_game()
+        fitness_arr.append(fitness)
+        individual.print_evaluation(fitness)
+        print("Temps d'entraînement: ", round(time.time() - start_time, 2), "s")
+    return np.array(fitness_arr)
+
+
+if __name__ == "__main__":
+    game = Game()
+    model = Model()
+    population_size = (INDIVIDUAL_PER_POPULATION, model.nb_weights)
+    current_population_weights = np.random.choice(np.arange(-1, 1, step=0.01), size=population_size, replace=True)
+
+    for generation in range(NB_GENERATIONS):
+        fitness_arr = run_population(current_population_weights, model, game, generation)
+
         # update population weights

@@ -38,13 +38,13 @@ class Individual:
                 state[i] = 0
         return np.asarray(state).reshape(1, self.state_size)
 
-    def play_game(self, steps_per_game=500, max_steps_per_food=50):
+    def play_game(self, steps_per_game=500, max_steps_to_get_food=50):
         steps = 0
         prev_score = 0
         steps_to_get_food = 0
         K.clear_session()
         self.game.reset()
-        while steps <= steps_per_game:
+        while steps < steps_per_game:
             need_reset = False
             state = self.get_state()
             prediction = self.model.predict(state, verbose=0)
@@ -53,39 +53,41 @@ class Individual:
 
             if prev_score != score:
                 prev_score = score
-                if score > self.best_score:
-                    self.best_score = score
-                self.steps_between_eating.append(steps_to_get_food)
+                self.steps_between_eating.append(1 if steps_to_get_food == 0 else steps_to_get_food)
                 steps_to_get_food = 0
             elif is_dead:
                 self.nb_deaths += 1
                 need_reset = True
-            elif steps_to_get_food >= max_steps_per_food:
+            elif steps_to_get_food >= max_steps_to_get_food:
                 self.penalties += 1
                 need_reset = True
             else:
                 steps_to_get_food += 1
 
             if need_reset:
-                self.game.reset()
+                if score > self.best_score:
+                    self.best_score = score
                 prev_score = 0
                 steps_to_get_food = 0
+                self.game.reset()
             steps += 1
 
-    def get_avg_steps_between_eating(self):
+        return self.fitness_func()
+
+    def avg_steps_between_eating(self):
         return np.mean(np.array(self.steps_between_eating)) if len(self.steps_between_eating) > 0 else 0
 
     def fitness_func(self):
         return round(((self.best_score * 500)
                 - (self.nb_deaths * 15)
-                - (self.get_avg_steps_between_eating() * 10)
+                - (self.avg_steps_between_eating() * 10)
                 - (self.penalties * 100)), 2)
 
-    def print_evaluation(self):
+    def print_evaluation(self, fitness):
         print("Generation: ", self.generation_id,
               " Individual: ", self.individual_id,
-              " Evaluation: ", self.fitness_func())
+              " Evaluation: ", fitness)
         print("Detailed evaluation: Best score: ", self.best_score,
               " Nb deaths: ", self.nb_deaths,
-              " Avg steps between eating: ", self.get_avg_steps_between_eating(),
+              " Avg steps between eating: ", self.avg_steps_between_eating(),
               " Penalties: ", self.penalties)

@@ -6,9 +6,7 @@ class Game:
     def __init__(self):
         self.width = 10
         self.height = 10
-        self.grid = np.zeros(shape=(self.height + 2, self.width + 2), dtype=int)
-        self.grid[[0, -1], :] = 1
-        self.grid[:, [0, -1]] = 1
+        self.grid = []
         self.right = 0
         self.left = 1
         self.up = 2
@@ -19,6 +17,9 @@ class Game:
         self.score = 0
 
     def reset(self):
+        self.grid = np.zeros(shape=(self.height + 2, self.width + 2), dtype=int)
+        self.grid[[0, -1], :] = 1
+        self.grid[:, [0, -1]] = 1
         self.snake = [(5, 5), (4, 5), (3, 5)]
         for p in self.snake:
             self.grid[p[1]][p[0]] = 1
