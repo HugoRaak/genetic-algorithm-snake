@@ -7,10 +7,10 @@ def avg_steps_between_eating(steps_between_eating):
 
 
 def fitness_func(best_score, nb_deaths, steps_between_eating, penalties):
-    return round(((best_score * 500)
-            - (nb_deaths * 15)
-            - (avg_steps_between_eating(steps_between_eating) * 10)
-            - (penalties * 100)), 2)
+    return round(((best_score * 5000)
+            - (nb_deaths * 150)
+            - (avg_steps_between_eating(steps_between_eating) * 100)
+            - (penalties * 1000)), 2)
 
 
 class Individual:

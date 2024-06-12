@@ -1,4 +1,5 @@
 import os
+import time
 import numpy as np
 from model import Model
 from game import Game
@@ -6,9 +7,9 @@ from individual import Individual
 from ag import *
 
 
-INDIVIDUAL_PER_POPULATION = 5
-NB_GENERATIONS = 2
-NB_SELECTED_INDIVIDUALS = 3
+INDIVIDUAL_PER_POPULATION = 50
+NB_GENERATIONS = 100
+NB_SELECTED_INDIVIDUALS = 12
 NB_MUTATIONS = 1
 SAVE_WEIGHTS_INTERVAL = 5
 CURRENT_GENERATION = 0
@@ -23,6 +24,7 @@ def run_population(population_weights, model_builder, simulation, generation_id)
     avg_score_arr = []
     best_score_arr = []
     for i in range(INDIVIDUAL_PER_POPULATION):
+        start = time.time()
         individual = Individual(
             game=simulation,
             model=model_builder.build_model(population_weights[i]),
@@ -35,6 +37,7 @@ def run_population(population_weights, model_builder, simulation, generation_id)
         avg_score_arr.append(avg_score)
         deaths_arr.append(deaths)
         best_score_arr.append(best_score)
+        print("Individual ", i, " took ", time.time() - start)
     return (np.array(fitness_arr), np.array(avg_score_arr),
             round(np.mean(np.array(deaths_arr)), 2), np.array(best_score_arr))
 
@@ -51,6 +54,14 @@ if __name__ == "__main__":
         current_population_weights = np.random.choice(np.arange(-1, 1, step=0.01), size=population_size, replace=True)
 
     for generation in range(NB_GENERATIONS):
+
+        # save weights
+        if generation % SAVE_WEIGHTS_INTERVAL == 0 or generation == NB_GENERATIONS - 1:
+            if not os.path.exists(PATH_WEIGHTS):
+                os.makedirs(PATH_WEIGHTS)
+            path = PATH_WEIGHTS + "/generation_" + str(generation) + ".txt"
+            np.savetxt(path, current_population_weights)
+
         # run population
         population_fitness, avgs_score, avg_deaths, best_scores = run_population(current_population_weights, model, game, generation)
 
@@ -84,10 +95,3 @@ if __name__ == "__main__":
                 + " Max score: " + str(np.max(best_scores))
                 + " Best individual: " + str(np.argmax(population_fitness)) + " \n")
         f.close()
-
-        # save weights
-        if generation % SAVE_WEIGHTS_INTERVAL == 0 or generation == NB_GENERATIONS - 1:
-            if not os.path.exists(PATH_WEIGHTS):
-                os.makedirs(PATH_WEIGHTS)
-            path = PATH_WEIGHTS + "/generation_" + str(generation) + ".txt"
-            np.savetxt(path, current_population_weights)
