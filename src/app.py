@@ -8,7 +8,6 @@ from training_game import TrainingGame
 from individual import Individual
 from ag import *
 
-
 TRAINING = False
 INDIVIDUAL_PER_POPULATION = 50
 NB_GENERATIONS = 100
@@ -59,7 +58,9 @@ def run_training(model_builder, training_game, current_population_weights):
             np.savetxt(path, current_population_weights)
 
         # run population
-        population_fitness, avgs_score, avg_deaths, best_scores = run_population(current_population_weights, model_builder, training_game, generation)
+        population_fitness, avgs_score, avg_deaths, best_scores = run_population(current_population_weights,
+                                                                                 model_builder, training_game,
+                                                                                 generation)
 
         # select individuals from population
         selected_individuals = select_individuals(
@@ -93,9 +94,10 @@ def run_training(model_builder, training_game, current_population_weights):
         f.close()
 
 
-def get_best_individual_weights():
+def get_best_individual_weights(generation_id=-1):
     results = []
-    with open(PATH_STATS + "/generations_stats.txt", 'r') as f:
+    individual = None
+    with (open(PATH_STATS + "/generations_stats.txt", 'r') as f):
         lines = f.readlines()
         for line in lines:
             if line.startswith("Generation:"):
@@ -104,13 +106,21 @@ def get_best_individual_weights():
                 max_fitness = float(line.split("Max fitness:")[1].split()[0])
             if "Best individual:" in line:
                 best_individual = int(line.split("Best individual:")[1].strip())
-                if generation is not None and max_fitness is not None and best_individual is not None:
-                    results.append((generation, best_individual, max_fitness))
+                if (generation is not None and max_fitness is not None and best_individual is not None
+                        and generation % SAVE_WEIGHTS_INTERVAL == 0 or generation == NB_GENERATIONS - 1):
+                    if generation == generation_id:
+                        individual = (generation, best_individual, max_fitness)
+                        break
+                    else:
+                        results.append((generation, best_individual, max_fitness))
 
-    best_individual = max(results, key=lambda x: x[2])
-    weights_path = PATH_WEIGHTS + "/generation_" + str(best_individual[0]) + ".txt"
+    if generation is None:
+        individual = max(results, key=lambda x: x[2])
+    if individual is None:
+        return None
+    weights_path = PATH_WEIGHTS + "/generation_" + str(individual[0]) + ".txt"
     population = np.loadtxt(weights_path)
-    return population[int(best_individual[1])]
+    return population[int(individual[1])]
 
 
 if __name__ == "__main__":
@@ -125,7 +135,10 @@ if __name__ == "__main__":
         run_training(model, TrainingGame(), current_pop_weights)
 
     else:
-        weights = get_best_individual_weights()
+        weights = get_best_individual_weights(3)
+        if weights is None:
+            print("No weights found")
+            exit(0)
         model = Model()
         root = tk.Tk()
         player = Individual(
