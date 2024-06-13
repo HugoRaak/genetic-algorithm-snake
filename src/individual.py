@@ -48,7 +48,7 @@ class Individual:
                 state[i] = 0
         return np.asarray(state).reshape(1, self.state_size)
 
-    def play_training_game(self, steps_per_game=500, max_steps_to_get_food=50):
+    def train_game(self, steps_per_game=500, max_steps_to_get_food=50):
         steps = 0
         prev_score = 0
         steps_to_get_food = 0
@@ -104,7 +104,7 @@ class Individual:
         state = self.get_state()
         prediction = self.model.predict(state, verbose=0)
         direction = np.argmax(prediction[0])
-        is_dead = self.game.do_move(direction)
+        _, is_dead = self.game.do_step(direction)
         if is_dead:
             self.game.reset()
             self.game.draw()

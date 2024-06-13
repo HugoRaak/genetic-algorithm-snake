@@ -4,23 +4,22 @@ import tkinter as tk
 import numpy as np
 from model import Model
 from game import Game
-from training_game import TrainingGame
 from individual import Individual
 from ag import *
 
-TRAINING = False
+TRAINING = True
 INDIVIDUAL_PER_POPULATION = 50
 NB_GENERATIONS = 100
 NB_SELECTED_INDIVIDUALS = 12
 NB_MUTATIONS = 1
 SAVE_WEIGHTS_INTERVAL = 5
-CURRENT_GENERATION = 0
-RESTORE_WEIGHTS_FROM_TXT = False
+CURRENT_GENERATION = 5
+RESTORE_WEIGHTS_FROM_TXT = True
 PATH_WEIGHTS = "weights"
 PATH_STATS = "stats"
 
 
-def run_population(population_weights, model_builder, training_game, generation_id):
+def run_population(population_weights, model_builder, game, generation_id):
     fitness_arr = []
     deaths_arr = []
     avg_score_arr = []
@@ -28,13 +27,13 @@ def run_population(population_weights, model_builder, training_game, generation_
     for i in range(INDIVIDUAL_PER_POPULATION):
         start = time.time()
         individual = Individual(
-            game=training_game,
+            game=game,
             model=model_builder.build_model(population_weights[i]),
             input_size=model_builder.layers[0],
             generation_id=generation_id,
             individual_id=i
         )
-        fitness, avg_score, deaths, best_score = individual.play_training_game()
+        fitness, avg_score, deaths, best_score = individual.train_game()
         fitness_arr.append(fitness)
         avg_score_arr.append(avg_score)
         deaths_arr.append(deaths)
@@ -44,7 +43,7 @@ def run_population(population_weights, model_builder, training_game, generation_
             round(np.mean(np.array(deaths_arr)), 2), np.array(best_score_arr))
 
 
-def run_training(model_builder, training_game, current_population_weights):
+def run_training(model_builder, current_population_weights):
     for generation in range(NB_GENERATIONS):
         # skip old generations
         if RESTORE_WEIGHTS_FROM_TXT and generation <= CURRENT_GENERATION:
@@ -59,7 +58,7 @@ def run_training(model_builder, training_game, current_population_weights):
 
         # run population
         population_fitness, avgs_score, avg_deaths, best_scores = run_population(current_population_weights,
-                                                                                 model_builder, training_game,
+                                                                                 model_builder, Game(),
                                                                                  generation)
 
         # select individuals from population
@@ -114,7 +113,7 @@ def get_best_individual_weights(generation_id=-1):
                     else:
                         results.append((generation, best_individual, max_fitness))
 
-    if generation is None:
+    if generation_id == -1:
         individual = max(results, key=lambda x: x[2])
     if individual is None:
         return None
@@ -132,10 +131,10 @@ if __name__ == "__main__":
         else:
             current_pop_weights = np.random.choice(np.arange(-1, 1, step=0.01), size=population_size, replace=True)
 
-        run_training(model, TrainingGame(), current_pop_weights)
+        run_training(model, current_pop_weights)
 
     else:
-        weights = get_best_individual_weights(3)
+        weights = get_best_individual_weights()
         if weights is None:
             print("No weights found")
             exit(0)
